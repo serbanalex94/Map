@@ -1,15 +1,37 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
+<head>
+<meta charset="utf-8">
+<title>Use a clip layer to remove rendered features from the map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	// TO MAKE THE MAP APPEAR YOU MUST
+	// ADD YOUR ACCESS TOKEN FROM
+	// https://account.mapbox.com
+    
+	mapboxgl.accessToken = 'pk.eyJ1IjoiZHNxd2VydCIsImEiOiJjbTd4b3p5NzEwMWVvMnJzNXQzeWY4ams2In0.cByx-0ei1bS52Lq6_FDtjw';
+    const map = (window.map = new mapboxgl.Map({
+        container: 'map',
+        center: [26.006292, 44.712666], //44.4268° N, 26.1025°
+        zoom: 1,
+        pitch: 0,
+        bearing: 0,
+        style: 'mapbox://styles/dsqwert/cm7xsmemx00uk01qu6ptt0lnc',
+        minZoom: 1,
+        maxZoom: 16,
    
-  </head>
-  <body style="background-color:rgb(75, 75, 75); font-size: 40px;">
+    }));
 
-    <iframe allowfullscreen
-    src="https://www.google.com/maps/d/embed?mid=1kWO3G7HmUim2yQA9cyt3lnfChWdzRRo&ehbc=2E312F" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
-        Your browser doesn't support iframes
-    </iframe>
+  </script>
 
-  </body>
+</body>
 </html>
