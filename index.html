@@ -1,38 +1,483 @@
+
+
 <!DOCTYPE html>
 <html>
-<head>
+
 <meta charset="utf-8">
-<title>Use a clip layer to remove rendered features from the map</title>
+<title>A</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
 <style>
 body { margin: 0; padding: 0; }
 #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+html {
+  --dark-gray: rgb(70, 70, 70);
+  --light-gray: rgb(124, 124, 124);
+  --focus-blue: rgb(69, 159, 189);
+}
+
+.marker { /* SVG marker */
+        background-image: url('https://docs.mapbox.com/mapbox-gl-js/assets/pin.svg');
+        background-size: cover;
+        cursor: pointer;
+}
+
+.map-overlay {
+        display: none;
+        font: 12px/20px sans-serif;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 230px;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .map-overlay-inner {
+        background: #fff;
+        padding: 10px;
+        border-radius: 3px;
+    }
+
+.searchbox {
+  --target-size: 48px; /* https://web.dev/accessible-tap-targets/ */
+  --box-height: var(--target-size);
+  --border-radius: calc(var(--box-height) / 2);
+  --border-width: 3px;
+  --icon-size: calc(var(--box-height) * 3/4 );
+  --side-margin: calc(var(--border-radius) / 2);
+  --icon-vertical-margin: calc( ( var(--box-height) - var(--icon-size) ) / 2 );
+}
+
+/* shaping the box */
+.searchbox {
+  height: var(--box-height);
+  max-width: 561px; /* to follow the search box of google.com */
+}
+.searchbox input[type="search"] {
+  border: var(--border-width) solid var(--dark-gray);
+  border-radius: var(--border-radius);
+  height: 100%;
+  width: 100%;
+}
+
+/* Styling each component */
+.searchbox svg {
+  fill: var(--dark-gray);
+  height: var(--icon-size);
+  width: var(--icon-size);
+}
+.searchbox input[type="search"] {
+  -webkit-appearance: none; /* to prevent Safari from ignoring font-size */
+  color: var(--dark-gray); 
+  font-family: 'Noto Sans', Verdana, sans-serif;
+  font-size: 1rem;
+}
+.searchbox input[type="search"]::placeholder {
+  color: var(--light-gray);
+  opacity: 1; /* to override the default of Firefox */
+}
+
+ /* positioning inner elements */
+.searchbox {
+  position: relative;
+}
+
+.searchbox input[type="search"] {
+  padding-left: calc( var(--side-margin) + var(--icon-size) + 4px);
+  padding-right: var(--side-margin);
+}
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none; /* Remove the left padding inside the box for Safari; see https://github.com/filipelinhares/ress/blob/master/ress.css */
+}
+
+
+
+.searchbox input[type="search"] {
+  background: transparent;
+}
+
+/* Styling focus state */
+.searchbox input[type="search"]:focus {
+  border-color: var(--focus-blue);
+  box-shadow: 0px 0px 7px var(--focus-blue);
+  outline: 2px solid transparent; /* fallback for forced color modes; see https://www.sarasoueidan.com/blog/focus-indicators/#tips-for-styling-focus-indicators */
+  /* it also removes the default focus ring imposed by browsers */
+}
+
+/* Custom-style the delete button that appears once the user enters text (Chrome and Safari only); see https://css-tricks.com/webkit-html5-search-inputs/#aa-styling-search-graphical-widgets */
+.searchbox input[type="search"]::-webkit-search-cancel-button {
+  /* Remove default */
+  -webkit-appearance: none;
+  /* Now your own custom styles */
+  background-image: url("data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='rgb(148, 148, 148)' %3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z' /%3E%3C/svg%3E%0A");
+  height: calc(var(--box-height) / 2);
+  width: calc(var(--box-height) / 2);
+}
+
+input[type="search"] {
+  -webkit-tap-highlight-color: transparent; /* Otherwise, tapping will show a flash of grey background on iOS Safari; see https://twitter.com/masa_kudamatsu/status/1429387005658468356 */
+}
+
+
+/* Positioning the search box */
+body .searchbox {
+  width: 90%;
+  margin: 0 auto;
+  top: 200px;
+}
+
 </style>
-</head>
-<body>
+
+
 <div id="map"></div>
-<script>
-	// TO MAKE THE MAP APPEAR YOU MUST
-	// ADD YOUR ACCESS TOKEN FROM
-	// https://account.mapbox.com
-    
-	mapboxgl.accessToken = 'pk.eyJ1IjoiZHNxd2VydCIsImEiOiJjbTg5NjJzMXcwemZnMmxyN2NxamlxbGtiIn0.jQBrFHdMJ5M0l3FtJHmRmA';
-    const map = (window.map = new mapboxgl.Map({
-        container: 'map',
-        center: [26.006292, 44.712666], //44.4268° N, 26.1025°
-        zoom: 1,
-        pitch: 0,
-        bearing: 0,
-        style: 'mapbox://styles/dsqwert/cm7xsmemx00uk01qu6ptt0lnc',
-        minZoom: 1,
-        maxZoom: 16,
-	attributionControl: false,
-   
-    }));
+<!--- any elements after map
+<div id = "test_el" class="searchbox"> TEST </div>
+ -->
+ <div class="map-overlay right" id="properties"></div>
+<div class="searchbox"> 
 
-  </script>
-
-</body>
+    <input 
+        id = "searchbar"
+      aria-label="Search for a place on the map" 
+      autocomplete="off"
+      inputmode="search" 
+      placeholder="Search..."
+      type="search" 
+    />
+</div>
 </html>
+
+<script>
+
+
+    //  NETWORK
+    var counter = 1  
+ 	  var map
+
+    function init_MAP(){
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZHNxd2VydCIsImEiOiJjbTg5NjJzMXcwemZnMmxyN2NxamlxbGtiIn0.jQBrFHdMJ5M0l3FtJHmRmA';
+  
+        map = new mapboxgl.Map({
+          container: 'map',
+          style : 'mapbox://styles/examples/cke97f49z5rlg19l310b7uu7j',
+          //style: 'mapbox://styles/dsqwert/cm7xsmemx00uk01qu6ptt0lnc', 
+          projection: 'globe', // Display the map as a globe, since satellite-v9 defaults to Mercator
+          zoom: 1,
+          center: [30, 15],
+
+        });
+
+        map.on('style.load', () => {
+          map.setFog({}); // Set the default atmosphere style
+
+            map.flyTo({
+              center: [30, 15],
+              //speed : 0.3,
+              //duration: 12000,
+              screenSpeed: 0.2,
+              zoom: 2.5,
+              essential: true // this animation is considered essential with respect to prefers-reduced-motion
+          });
+        });
+
+       
+    }
+  
+    function spinEarth(){
+
+        //  MAP VARS
+      // The following values can be changed to control rotation speed:
+      const secondsPerRevolution = 240; // At low zooms, complete a revolution every two minutes.
+      const maxSpinZoom = 3;  //if zoomed beyond zoomlevel 3 , do not rotate
+      const slowSpinZoom = 3; // Rotate at intermediate speeds between zoom levels 3 and 5.
+      let userInteracting = false;
+      const spinEnabled = true;
+
+        //SPIN
+        const zoom = map.getZoom();         
+    
+        if (spinEnabled && !userInteracting && zoom < maxSpinZoom) {
+              let distancePerSecond = 360 / secondsPerRevolution;
+              if (zoom > slowSpinZoom) {
+                  // Slow spinning at higher zooms
+                  const zoomDif =
+                      (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+                  distancePerSecond *= zoomDif;
+              }
+              const center = map.getCenter();
+              center.lng -= distancePerSecond;
+              // Smoothly animate the map over one second.
+              // When this animation is complete, it calls a 'moveend' event.
+              map.easeTo({ center, duration: 3000, easing: (n) => n });
+          }
+
+    }
+
+    function init_UI_searchbar(){
+      const searchbar_el = document.getElementById("searchbar")
+
+    }
+    function init_UI_airports(){
+
+    
+
+      const card = document.getElementById('properties');
+     
+      const showCard = (feature) => {
+          card.innerHTML = `
+              <div class="map-overlay-inner">
+                  <code>${feature.properties.name}</code><hr>
+                  ${Object.entries(feature.properties)
+                      .map(([key, value]) => `<li><b>${key}</b>: ${value}</li>`)
+                      .join('')}
+              </div>`;
+
+          card.style.display = 'block';
+      };
+
+      map.on('style.load', () => {
+          map.addSource('airports', {
+              'type': 'vector',
+              'url': 'mapbox://mapbox.04w69w5j',
+              'promoteId': 'abbrev'
+          });
+
+          map.addLayer({
+              'id': 'airport',
+              'source': 'airports',
+              'source-layer': 'ne_10m_airports',
+              'type': 'circle',
+              'paint': {
+                  'circle-color': [
+                      'case',
+                      ['boolean', ['feature-state', 'selected'], false],
+                      '#f00',
+                      '#4264fb'
+                  ],
+                  'circle-radius': [
+                      'case',
+                      ['boolean', ['feature-state', 'selected'], false],
+                      6,
+                      ['boolean', ['feature-state', 'highlight'], false],
+                      6,
+                      4
+                  ],
+                  'circle-stroke-width': 2,
+                  'circle-stroke-color': '#ffffff'
+              }
+          });
+
+          // Clicking on a feature will highlight it and display its properties in the card
+          let selectedFeature = null;
+          map.addInteraction('click', {
+              type: 'click',
+              target: { layerId: 'airport' },
+              handler: ({ feature }) => {
+                  if (selectedFeature) {
+                      map.setFeatureState(selectedFeature, { selected: false });
+                  }
+
+                  selectedFeature = feature;
+                  map.setFeatureState(feature, { selected: true });
+                  showCard(feature);
+              }
+          });
+
+          // Clicking on the map will deselect the selected feature
+          map.addInteraction('map-click', {
+              type: 'click',
+              handler: () => {
+                  if (selectedFeature) {
+                      map.setFeatureState(selectedFeature, { selected: false });
+                      selectedFeature = null;
+                      card.style.display = 'none';
+                  }
+              }
+          });
+
+          // Hovering over a feature will highlight it
+          map.addInteraction('mouseenter', {
+              type: 'mouseenter',
+              target: { layerId: 'airport' },
+              handler: ({ feature }) => {
+                  map.setFeatureState(feature, { highlight: true });
+                  map.getCanvas().style.cursor = 'pointer';
+              }
+          });
+
+          // Moving the mouse away from a feature will remove the highlight
+          map.addInteraction('mouseleave', {
+              type: 'mouseleave',
+              target: { layerId: 'airport' },
+              handler: ({ feature }) => {
+                  map.setFeatureState(feature, { highlight: false });
+                  map.getCanvas().style.cursor = '';
+                  return false;
+              }
+          });
+      });
+
+
+      }
+
+    function init_UI_pins_mountains() {
+        const geojson = {
+        'type': 'FeatureCollection',
+        'features': [
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Everest',
+                    'height': 8849
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [86.925278, 27.988056]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Denali',
+                    'height': 6194
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [-151.0074, 63.0695]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Aconcagua',
+                    'height': 6961
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [-70.0112, -32.653197]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Vinson Massif',
+                    'height': 4892
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [-85.617147, -78.525483]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Kilimanjaro',
+                    'height': 5895
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [37.353333, -3.075833]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Elbrus',
+                    'height': 5642
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [42.439167, 43.355]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Puncak Jaya',
+                    'height': 4884
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [137.158333, -4.078889]
+                }
+            },
+            {
+                'type': 'Feature',
+                'properties': {
+                    'name': 'Mauna Kea',
+                    'height': 4205
+                },
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [-155.468056, 19.820667]
+                }
+            }
+        ]
+    };
+
+    for (const marker of geojson.features) {
+        // Create a DOM element for each marker.
+        const el = document.createElement('div');
+        el.className = 'marker';
+        const size = marker.properties.height / 100;
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+
+        // Add a popup displayed on click for each marker
+        const popup = new mapboxgl.Popup({ offset: 25 });
+        popup.setHTML(
+            `<h2>${marker.properties.name}</h2>${marker.properties.height}m<br/>`
+        );
+
+        // Add markers to the map.
+        new mapboxgl.Marker({
+            element: el,
+            // Point markers toward the nearest horizon
+            rotationAlignment: 'horizon',
+            offset: [0, -size / 2]
+        })
+            .setLngLat(marker.geometry.coordinates)
+            .setPopup(popup)
+            .addTo(map);
+    }
+      }
+
+  
+
+    async function manage_Data() {   
+      const url = "https://blue.home.ro/api/user123";  
+      await fetch(url,{ 
+          method: 'GET',
+          headers : {
+            'Accept' : 'application/json',
+            'Content-Type': 'application/json',
+          },
+          
+        })
+        .then(response => response.json()) // Parse the response as JSON
+        .then(response => console.log(JSON.stringify(response)) ) // Handle the success response
+        .catch(error => console.error('Error:', error)); // Handle errors 
+    }
+ 
+  
+    init_MAP()
+    init_UI_searchbar()
+    init_UI_airports()
+    init_UI_pins_mountains()
+
+    async function LOOP() {
+      spinEarth();
+      //await manage_Data();   
+    } ; setInterval(LOOP, 3000);
+   
+    
+  
+
+      
+
+</script>
+
+
