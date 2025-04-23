@@ -22,7 +22,7 @@ html,
 
 /* Map Hue  rotation, copyright feature add_Map_Theme() */
 .leaflet-tile {
-  filter: hue-rotate(11deg) !important;
+  filter: hue-rotate(111deg) !important;
 }
 
 
